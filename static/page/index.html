@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Boss直聘 职位信息下载</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body style="padding: 0px;margin:0px;">
+<div id="app" style="margin-top: 50px">
+    <el-container>
+        <el-main>
+            <el-row type="flex" justify="center">
+                <el-col :span="8">
+                    <el-card>
+                        <h1>Boss直聘 职位信息下载</h1>
+                        <el-form
+                                label-position="right"
+                                label-width="80px"
+                                :model="taskInfo"
+                                ref="taskInfo"
+                                :rules="rules"
+                                v-if="step == 1"
+                        >
+                            <el-form-item label="网址" prop="url">
+                                <el-input placeholder="请输入起始网址" v-model="taskInfo.url"></el-input>
+                            </el-form-item>
+
+                            <el-form-item label="起始页码" prop="start">
+                                <el-input v-model.number="taskInfo.start"></el-input>
+                            </el-form-item>
+
+                            <el-form-item label="结束页码" prop="end">
+                                <el-input v-model.number="taskInfo.end"></el-input>
+                            </el-form-item>
+
+                            <el-form-item>
+                                <el-button type="primary" @click="submitForm">爬取</el-button>
+                                <el-button @click="resetForm">重置</el-button>
+                                <el-link type="info" href="/static/page/help.html" style="margin-left: 50px">使用说明</el-link>
+                            </el-form-item>
+                        </el-form>
+
+                        <div class="crawling-card" v-if="step == 2" style="text-align: center">
+                            <el-progress type="circle" :percentage="crawlProgress" color="#8e71c7"></el-progress>
+                            <p>正在爬取，请耐心等待...</p>
+                        </div>
+
+                        <div class="download-card" style="text-align: center" v-if="step == 3">
+                            <el-button type="primary" icon="el-icon-download" circle @click="download"></el-button>
+                            <p>职位信息下载完成<br>点击蓝色按钮下载结果</p>
+                            <el-button @click="reset">再爬一次
+                            </el-button>
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+        </el-main>
+    </el-container>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<script>
+    function formatFormData(obj) {
+        let data = new FormData();
+        data.append('url', obj.url);
+        data.append('start', obj.start);
+        data.append('end', obj.end);
+        return data
+    }
+
+    new Vue({
+        el: '#app',
+        data: {
+            step: 1,
+            crawlProgress: 0,
+            updateInterval: null,
+            taskId: '',
+            taskInfo: {
+                url: null,
+                start: 1,
+                end: 2,
+            },
+            rules: {
+                url: [
+                    {required: true, message: '请输入起始网址', trigger: 'blur'}
+                ],
+                start: [
+                    {required: true, message: '请输入开始页码'},
+                    {type: 'number', message: '请输入数字'},
+                ],
+                end: [
+                    {type: 'number', message: '请输入有效页码'},
+                    {required: true, message: '请输入数字'},
+                ]
+            }
+        },
+        methods: {
+            submitForm() {
+                this.$refs['taskInfo'].validate((valid) => {
+                    if (valid) {
+                        axios.post(
+                            '/boss_spider/create',
+                            formatFormData(this.taskInfo),
+                            {headers: {'Content-Type': 'multipart/form-data'}}
+                        ).then((resp) => {
+                            this.taskId = resp.data;
+                            if (resp.data) {
+                                this.step++;
+                                this.updateInterval = setInterval(this.updateProgress, 1000)
+                            }
+                        }).catch((error)=>{
+                            this.$message.error(error.response.data);
+                        })
+                    }
+                })
+            },
+
+            resetForm() {
+                this.$refs['taskInfo'].resetFields();
+            },
+
+            download() {
+                axios.get('/boss_spider/positions/' + this.taskId, {responseType: 'blob'})
+                    .then((resp) => {
+                        const blob = new Blob([resp.data]);
+                        const filename = "Positions.csv";
+                        if (window.navigator.msSaveOrOpenBlob) {
+                            // 兼容IE10
+                            navigator.msSaveBlob(blob, filename);
+                        } else {
+                            //  chrome/firefox
+                            let aTag = document.createElement('a');
+                            aTag.download = filename;
+                            aTag.href = URL.createObjectURL(blob);
+                            aTag.click();
+                            URL.revokeObjectURL(aTag.href)
+                        }
+
+                    })
+            },
+
+            updateProgress() {
+                axios.get('/boss_spider/status/' + this.taskId)
+                    .then((resp) => {
+                        if (resp.data['end']) {
+                            this.crawlProgress = 100;
+                            clearInterval(this.updateInterval);
+                            this.crawlProgress = 0;
+                            this.step++;
+                        } else {
+                            this.crawlProgress = resp.data['current'] / resp.data['total'] * 100;
+                        }
+                    })
+            },
+            reset() {
+                this.step = 1;
+                clearInterval(this.updateInterval);
+                this.updateInterval = null;
+                this.resetForm()
+            }
+        }
+    })
+</script>
+
+</html>

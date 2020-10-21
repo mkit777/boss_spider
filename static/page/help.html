@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>使用说明-Boss直聘 职位信息下载</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        img {
+            margin: 10px 0;
+        }
+        h1 {
+            font-size: 25px;
+        }
+        p {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header>
+            <h1 style="text-align: center">Boss直聘 职位信息下载 使用说明</h1>
+        </el-header>
+        <el-main>
+            <el-row type="flex" justify="center">
+                <el-col :md="10">
+                    <p>
+                        1. 打开 <a href="https://www.zhipin.com/?sid=sem_pz_bdpc_dasou_title">Boss直聘官网</a>
+                        <img src="../images/p-1.png" alt="打开官网" width="100%">
+                    </p>
+                    <p>
+                        2. 按需<b>筛选</b>职位，并<b>搜索</b>
+                        <img src="../images/p-2.png" alt="筛选职位信息" width="100%">
+                    </p>
+                    <p>
+                        3. 将<b>网址</b>和自己<b>待爬取的页码</b>填入表单中，点击<b>爬取</b>
+                        <img src="../images/p-3.png" alt="网址" width="100%">
+                        <img src="../images/p-4.png" alt="表单信息" width="100%">
+                        如图我要爬取该搜索结果的1-4页
+                    </p>
+                    <p>
+                        4. 等待爬取完成
+                        <img src="../images/p-5.png" alt="等待爬取完成">
+                    </p>
+                    <p id="btm">
+                        5. 下载结果
+                        <img src="../images/p-6.png" alt="下载结果">
+                    </p>
+                </el-col>
+            </el-row>
+             <el-backtop target="#btm"></el-backtop>
+        </el-main>
+    </el-container>
+
+</div>
+
+</body>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+    new Vue({
+        el: "#app",
+        data: {}
+    })
+</script>
+</html>
